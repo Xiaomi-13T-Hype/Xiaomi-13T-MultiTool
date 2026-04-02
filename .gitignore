@@ -1,0 +1,27 @@
+# Exclude large binary files
+*.img
+*.dll
+*.exe
+*.zip
+*.tar
+*.gz
+*.7z
+*.rar
+
+# Internal directories
+_internal/
+output/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+*.swp
+*.swo
