@@ -1,77 +1,49 @@
 # Xiaomi 13T MultiTool
 
-Полный набор инструментов для Xiaomi 13T устройств.
+## Features programm:
 
-## Что включено
+- **Root installers**: Stock, KSU, SukiSU, Magisk auto-installers for all regions firmwares
+- **Custom Recovery**: Custom Recovery
+- **Fastboot Flash**: Fastboot MiFlash
+- **Unlocking bootloader**: Bootloader Unlock Tools
+- **Scrcpy**: Ьirroring your phone screen to PC
+- **Adb/fastboot terminal**
 
-- **Все исходники и скрипты** (.py, .bat файлы)
-- **Документация** (.txt, .md файлы) 
-- **Конфигурации** (.xml, .ini, .cfg файлы)
-- **Изображения интерфейса** (.png, .jpg, .gif файлы)
-- **Пакетные файлы** для разных версий HyperOS
-- **Полная структура папок** с инструментами
-
-## Что исключено
-
-- **Образы системы** (.img файлы) - слишком большие для GitHub
-- **Исполняемые файлы** (.exe, .dll) - могут быть скачаны отдельно
-
-## Основные возможности:
-
-- **Root прошивки**: Поддержка Stock, KSU, SukiSU, Magisk для всех регионов
-- **Recovery**: Установка Recovery
-- **Официальные прошивки**: Flash официальных прошивок
-- **Fastboot Flash**: Прошивка через Fastboot
-- **Разблокировка загрузчика**: Инструкции и инструменты
-
-## Поддерживаемые регионы HyperOS 2:
+## Versions Program:
 
 - Global (GL)
 - Europa (EU) 
-- India (IN)
+- Indonesia (IN)
 - Russia (RU)
 - Taiwan (TA)
 - Turkey (TY)
 
-## Установка:
+## Install:
 
-1. Установите зависимости:
-   ```bash
-   python install_dependencies.py
-   ```
+1. Download Setup installer in releases
+2. Open Setup and install
+3. Open ink on Administrator
 
-2. Запустите программу:
-   ```bash
-   python Xiaomi13TMultiFlasher.py
-   ```
 
-## Структура папок:
+## Structure:
 
 ```
 Xiaomi 13T MultiTool/
-├── Xiaomi13TMultiFlasher.py     # Основная программа
-├── Stock_KSU_SukiSU_Magisk/     # Root прошивки по регионам
-├── Recovery/                    # Recovery образы
-├── Official firmware/           # Официальные прошивки
-├── Fastboot flash tools/        # Инструменты для прошивки
-└── Unlocking bootloader/        # Инструменты для разблокировки bootloader
+├── Xiaomi13TMultiTool.py        # Main file
+├── Stock_KSU_SukiSU_Magisk/     # Root auto installers
+├── Recovery/                    # Custom recovery auto installers
+├── Fastboot flash tools/        # Fastboot Mi Flasher
+└── Unlocking bootloader/        # Bootloader Unlock Tools
 ```
+## System requirements:
 
-## Примечание
+- Windows 10+
+- 0.7 Gb+ (for setup installer)
 
-Бинарные файлы (.img образы) исключены из репозитория из-за размера. Их можно скачать отдельно из официальных источников или сгенерировать с помощью скриптов.
+## Note:
 
-## Системные требования:
+Recovery and boot(root) .img files excluded from the repository due to size, but they are in the project's releases.
 
-- Windows 10/11
-- Python 3.12+
+## License:
 
-## Особенности интерфейса:
-
-- Современный дизайн с градиентным фоном
-- Автоматический fallback на системные шрифты если кастомный недоступен
-- Прокрутка меню с поддержкой колесика мыши
-
-## Лицензия:
-
-MIT License - см. файл LICENSE
+MIT License - look file LICENSE
