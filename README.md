@@ -9,14 +9,6 @@
 - **Scrcpy**: Ьirroring your phone screen to PC
 - **Adb/fastboot terminal**
 
-## Versions Program:
-
-- Global (GL)
-- Europa (EU) 
-- Indonesia (IN)
-- Russia (RU)
-- Taiwan (TA)
-- Turkey (TY)
 
 ## Install:
 
@@ -37,8 +29,10 @@ Xiaomi 13T MultiTool/
 ```
 ## System requirements:
 
+- Installed ADB/Fastboot Drivers
 - Windows 10+
-- 1 Gb+ 
+- 1 Gb+ free space in drive
+
 
 ## Note:
 
