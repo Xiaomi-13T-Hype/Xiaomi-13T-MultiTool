@@ -1,0 +1,11 @@
+tkinter
+Pillow
+subprocess
+os
+sys
+enum
+datetime
+webbrowser
+threading
+io
+base64
