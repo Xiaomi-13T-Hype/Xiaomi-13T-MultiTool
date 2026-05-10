@@ -1,5 +1,7 @@
 # Xiaomi 13T MultiTool
 
+## INSTALL IN DISK C:\ AND INSTALL VC++ 2008-2022
+
 ## Features programm:
 
 - **Root installers**: Stock, KSU, SukiSU, Magisk auto-installers for all regions firmwares
