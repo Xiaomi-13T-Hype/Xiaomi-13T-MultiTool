@@ -38,7 +38,7 @@ Xiaomi 13T MultiTool/
 ## System requirements:
 
 - Windows 10+
-- 0.7 Gb+ (for setup installer)
+- 1 Gb+ 
 
 ## Note:
 
