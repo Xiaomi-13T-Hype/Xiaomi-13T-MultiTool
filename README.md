@@ -2,11 +2,11 @@
 
 ## Features programm:
 
-- **Root installers**: Stock, KSU, SukiSU, Magisk auto-installers for all regions firmwares
-- **Custom Recovery**: Custom Recovery
-- **Fastboot Flash**: Fastboot MiFlash
-- **Unlocking bootloader**: Bootloader Unlock Tools
-- **Scrcpy**: Ьirroring your phone screen to PC
+- **Root installers**: Stock, KSU 3.2.4, SukiSU 4.1.2, Magisk 30.7 auto-installers for all regions firmwares 
+- **Custom Recovery**: Custom Recovery (TWRP, PBRP, OFOX)
+- **Fastboot Flash**: MiFlash 2020
+- **Unlocking bootloader**: MiFlashUnlock and mi5.2.exe
+- **Scrcpy**: mirroring your phone screen to PC
 - **Adb/fastboot terminal**
 
 
