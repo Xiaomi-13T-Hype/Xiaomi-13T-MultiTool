@@ -1,5 +1,7 @@
 # Xiaomi 13T MultiTool
 
+PROJECT STOPPED FOR SOLUTIONS TO A VERY BIG PROBLEM RELATED TO "Root flashing"
+
 ## Features programm:
 
 - **Root installers**: Stock, KSU 3.2.4, SukiSU 4.1.2, Magisk 30.7 auto-installers for all regions firmwares 
