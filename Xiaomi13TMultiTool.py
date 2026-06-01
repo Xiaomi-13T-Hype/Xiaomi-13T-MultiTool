@@ -11,6 +11,8 @@ from tkinter import ttk, messagebox, filedialog
 from PIL import Image, ImageTk
 import io
 import base64
+import traceback
+
 
 class MenuAction(Enum):
     RUN_BAT = 1
@@ -18,6 +20,7 @@ class MenuAction(Enum):
     OPEN_URL = 3
     RUN_EXE = 4
     NOT_WORKING = 5
+    SHOW_STEPS = 6
 
 class MenuItem:
     def __init__(self, name, action=None, action_data=None, submenu=None, path_segment=None):
@@ -28,52 +31,64 @@ class MenuItem:
         self.path_segment = path_segment or name
 
 
+class Step:
+    def __init__(self, title, description, image_path):
+        self.title = title
+        self.description = description
+        self.image_path = image_path
+
+
 class FlashToolGUI:
     def __init__(self):
-        # Get directory where script is located (portable)
+        import sys
+        import os
+        import tkinter as tk
+
+        # base_path
         if getattr(sys, 'frozen', False):
-            # Running as compiled exe
-            if hasattr(sys, '_MEIPASS'):
-                # PyInstaller creates temp folder
-                self.base_path = os.path.join(os.path.dirname(sys.executable), '_internal')
-            else:
-                self.base_path = os.path.dirname(sys.executable)
-            print(f"Running as EXE from: {self.base_path}")
+            # PyInstaller EXE
+            self.base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
         else:
-            # Running as script
+            # Script mode
             self.base_path = os.path.dirname(os.path.abspath(__file__))
-            print(f"Running as script from: {self.base_path}")
-        
-        print(f"Base path set to: {self.base_path}")
+
+        print(f"Base path: {self.base_path}")
+
         self.current_path = self.base_path
         self.menu_stack = []
-        self.custom_font = None  # Will store custom font
-        self.bg_image = None  # Cache background image
-        self.cached_fonts = {}  # Cache font objects
-        
-        # Initialize main window
+        self.custom_font = None
+        self.bg_image = None
+        self.cached_fonts = {}
+        self.steps = []
+        self.current_step_index = 0
+
+        # GUI
         self.root = tk.Tk()
         self.root.title("Xiaomi 13T MultiTool")
         self.root.geometry("500x900")
         self.root.minsize(400, 700)
-        
-        # Setup styles and menu
+
         self.setup_styles()
         self.setup_menu()
         self.create_gui()
-        
-        # Bind keyboard shortcuts
-        self.root.bind('<F1>', lambda: self.run_fastboot_flash_tool())
-        
-        # Bind window close event
+
+        self.root.bind('<F1>', lambda e: self.run_fastboot_flash_tool())
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
     def run_fastboot_flash_tool(self):
         """Run Fastboot Flashing Tool (XiaoMiFlash.exe)"""
-        xiaomi_flash_path = os.path.join(self.base_path, "Fastboot flashing tool", "XiaoMiFlash.exe")
+        xiaomi_flash_path = os.path.join(
+            self.base_path,
+            "Fastboot_flash_tools",
+            "XiaoMiFlash.exe"
+        )
+
         if os.path.exists(xiaomi_flash_path):
             subprocess.Popen(f'"{xiaomi_flash_path}"', shell=True)
             self.update_status("Started Fastboot Flashing Tool (F1)")
+        else:
+            self.update_status("XiaoMiFlash.exe not found ❌")
+            print("Missing:", xiaomi_flash_path)
         
     def setup_styles(self):
         """Setup custom styles for ttk widgets"""
@@ -359,8 +374,16 @@ class FlashToolGUI:
             MenuItem("Recovery", submenu=self.create_recovery_menu()),
             MenuItem("Root", submenu=self.create_root_menu()),
             MenuItem("Scrcpy", submenu=self.create_scrcpy_menu()),
-            MenuItem("Unlocking bootloader", MenuAction.RUN_EXE, os.path.join("Unlocking_bootloader", "mi.exe"))
+            MenuItem("Unlocking bootloader", submenu=self.create_unlock_bootloader_menu())
         ]
+    
+    def create_unlock_bootloader_menu(self):
+        """Create Unlock Bootloader submenu"""
+        menu_items = [
+            MenuItem("Unlock bootloader", MenuAction.RUN_BAT, os.path.join("Unlocking_bootloader", "mi.exe")),
+            MenuItem("Automatic application Xiaomi Community", MenuAction.RUN_EXE, os.path.join("Unlocking_bootloader", "miflash_unlock.exe"))
+        ]
+        return menu_items
     
     def create_root_menu(self):
         """Create Root submenu with HyperOS 2 regional variants"""
@@ -461,7 +484,7 @@ class FlashToolGUI:
         return menu_items
     
     def create_version_menu_items(self, version_path):
-        """Create menu items for files in a version folder with direct execution buttons"""
+        """Create menu items for files in a version folder with submenus for KSU and SukiSU"""
         menu_items = []
         
         if os.path.exists(version_path):
@@ -516,31 +539,11 @@ class FlashToolGUI:
                     # Show button even if no file found
                     menu_items.append(MenuItem("Stock", MenuAction.NOT_WORKING, "No Stock file found"))
                 
-                # KSU button
-                if ksu_file:
-                    relative_path = os.path.relpath(os.path.join(version_path, ksu_file), self.base_path)
-                    if ksu_file.endswith('.bat'):
-                        menu_items.append(MenuItem("KSU", MenuAction.RUN_BAT, relative_path))
-                    elif ksu_file.endswith('.exe'):
-                        menu_items.append(MenuItem("KSU", MenuAction.RUN_EXE, relative_path))
-                    else:
-                        menu_items.append(MenuItem("KSU", MenuAction.SHOW_LINK, relative_path))
-                else:
-                    # Show button even if no file found
-                    menu_items.append(MenuItem("KSU", MenuAction.NOT_WORKING, "No KSU file found"))
-                
-                # SukiSU button
-                if suki_file:
-                    relative_path = os.path.relpath(os.path.join(version_path, suki_file), self.base_path)
-                    if suki_file.endswith('.bat'):
-                        menu_items.append(MenuItem("SukiSU", MenuAction.RUN_BAT, relative_path))
-                    elif suki_file.endswith('.exe'):
-                        menu_items.append(MenuItem("SukiSU", MenuAction.RUN_EXE, relative_path))
-                    else:
-                        menu_items.append(MenuItem("SukiSU", MenuAction.SHOW_LINK, relative_path))
-                else:
-                    # Show button even if no file found
-                    menu_items.append(MenuItem("SukiSU", MenuAction.NOT_WORKING, "No SukiSU file found"))
+                # KSU - directly show installation guide
+                menu_items.append(MenuItem("KSU", MenuAction.SHOW_STEPS, self.create_ksu_steps()))
+
+                # SukiSU - directly show installation guide
+                menu_items.append(MenuItem("SukiSU", MenuAction.SHOW_STEPS, self.create_sukisu_steps()))
                 
                 # Magisk button
                 if magisk_file:
@@ -559,6 +562,73 @@ class FlashToolGUI:
                 print(f"Error reading version folder {version_path}: {e}")
         
         return menu_items
+    
+    def create_category_submenu(self, version_path, category, version_pattern):
+        """Create submenu items for a specific category (ksu, suki, etc.)"""
+        submenu_items = []
+
+        # Add installation guide for KSU and SukiSU
+        if category == 'ksu':
+            submenu_items.append(MenuItem("Installation Guide", MenuAction.SHOW_STEPS, self.create_ksu_steps()))
+        elif category == 'suki':
+            submenu_items.append(MenuItem("Installation Guide", MenuAction.SHOW_STEPS, self.create_sukisu_steps()))
+
+        if os.path.exists(version_path):
+            try:
+                files = [f for f in os.listdir(version_path) if os.path.isfile(os.path.join(version_path, f))]
+                files.sort()
+
+                # Find all files matching the category
+                for file in files:
+                    file_lower = file.lower()
+
+                    # Check if file matches the category
+                    if category in file_lower:
+                        relative_path = os.path.relpath(os.path.join(version_path, file), self.base_path)
+
+                        # Create display name (remove extension and version pattern)
+                        display_name = file
+                        if file.endswith('.bat'):
+                            display_name = file[:-4]
+                        elif file.endswith('.exe'):
+                            display_name = file[:-4]
+
+                        # Add to submenu based on file type
+                        if file.endswith('.bat'):
+                            submenu_items.append(MenuItem(display_name, MenuAction.RUN_BAT, relative_path))
+                        elif file.endswith('.exe'):
+                            submenu_items.append(MenuItem(display_name, MenuAction.RUN_EXE, relative_path))
+                        else:
+                            submenu_items.append(MenuItem(display_name, MenuAction.SHOW_LINK, relative_path))
+
+            except Exception as e:
+                print(f"Error creating category submenu for {category}: {e}")
+
+        # Always return submenu_items (never None) for KSU and SukiSU since they have Installation Guide
+        if category in ['ksu', 'suki']:
+            return submenu_items
+        else:
+            return submenu_items if submenu_items else None
+
+    def create_ksu_steps(self):
+        """Create KSU installation steps"""
+        return [
+            Step("Step 1: Open Settings", "Open Settings app on your device", "attached_assets/1_com.android.settings.jpg"),
+            Step("Step 2: Tap 10 times", "Tap on 'Version OS' 10 times to enable Developer Options", "attached_assets/2_com.android.settings.jpg"),
+            Step("Step 3: Back and go down", "Go back and scroll down to find 'Advanced settings'", "attached_assets/3_com.android.settings.jpg"),
+            Step("Step 4: Go down", "Scroll down in Developer Options menu", "attached_assets/4_com.android.settings.jpg"),
+            Step("Step 5: Go down and toggle switchs (You must be logged into your Mi account on your device)", "Reconnect your phone to PC and click ok if necessary", "attached_assets/5_com.android.settings.jpg")
+        ]
+
+    def create_sukisu_steps(self):
+        """Create SukiSU installation steps"""
+        return [
+            Step("Step 1: Open Settings", "Open Settings app on your device", "attached_assets/1_com.android.settings.jpg"),
+            Step("Step 2: Tap 10 times", "Tap on 'Version OS' 10 times to enable Developer Options", "attached_assets/2_com.android.settings.jpg"),
+            Step("Step 3: Back and go down", "Go back and scroll down to find 'Advanced settings'", "attached_assets/3_com.android.settings.jpg"),
+            Step("Step 4: Go down", "Scroll down in Developer Options menu", "attached_assets/4_com.android.settings.jpg"),
+            Step("Step 5: Go down and toggle switchs (You must be logged into your Mi account on your device)", "Reconnect your phone to PC and click ok if necessary", "attached_assets/5_com.android.settings.jpg")
+        ]
     
     def create_recovery_menu(self):
         """Create Recovery submenu"""
@@ -710,7 +780,10 @@ class FlashToolGUI:
             elif item.action == MenuAction.NOT_WORKING:
                 self.update_status(f"Feature not working: {item.action_data}")
                 messagebox.showwarning("Not Working", item.action_data)
-            
+
+            elif item.action == MenuAction.SHOW_STEPS:
+                self.show_steps(item.action_data)
+
             else:
                 self.update_status(f"Unknown action: {item.action} for item: {item.name}")
                 messagebox.showwarning("Unknown Action", f"Unknown action for: {item.name}")
@@ -779,6 +852,178 @@ class FlashToolGUI:
             MenuItem("Win64", MenuAction.RUN_EXE, os.path.join("Scrcpy", "Scrcpy_WIN64", "scrcpy.exe"))
         ]
     
+    def show_steps(self, steps):
+        """Show step-by-step instruction with images"""
+        self.steps = steps
+        self.current_step_index = 0
+        self.display_step()
+
+    def display_step(self):
+        """Display current step with image and navigation buttons"""
+        # Clear main content
+        for widget in self.main_content.winfo_children():
+            widget.destroy()
+
+        step = self.steps[self.current_step_index]
+
+        # Step title
+        title_label = ttk.Label(self.main_content,
+                               text=step.title,
+                               style='Title.TLabel')
+        title_label.pack(pady=(10, 5))
+
+        # Step description with scrollbar
+        desc_frame = tk.Frame(self.main_content, bg='#1a1a2e')
+        desc_frame.pack(pady=5, fill=tk.BOTH, expand=True)
+
+        desc_text = tk.Text(desc_frame,
+                           height=10,
+                           width=50,
+                           bg='#1a1a2e',
+                           fg='#e0e0e0',
+                           font=('Arial', 10),
+                           wrap=tk.WORD,
+                           relief=tk.FLAT,
+                           bd=0,
+                           padx=10,
+                           pady=5)
+        desc_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        desc_text.insert(tk.END, step.description)
+        desc_text.config(state=tk.DISABLED)
+
+        desc_scrollbar = tk.Scrollbar(desc_frame, command=desc_text.yview)
+        desc_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        desc_text.config(yscrollcommand=desc_scrollbar.set)
+
+        # Load and display image
+        try:
+            img_path = os.path.join(self.base_path, step.image_path)
+            if os.path.exists(img_path):
+                img = Image.open(img_path)
+                # Resize image to fit
+                img = img.resize((400, 300), Image.Resampling.LANCZOS)
+                photo = ImageTk.PhotoImage(img)
+                img_label = tk.Label(self.main_content, image=photo, bg='#1a1a2e')
+                img_label.image = photo  # Keep reference
+                img_label.pack(pady=10)
+            else:
+                error_label = ttk.Label(self.main_content,
+                                      text=f"Image not found: {step.image_path}",
+                                      style='Subtitle.TLabel')
+                error_label.pack(pady=10)
+        except Exception as e:
+            error_label = ttk.Label(self.main_content,
+                                  text=f"Error loading image: {str(e)}",
+                                  style='Subtitle.TLabel')
+            error_label.pack(pady=10)
+
+        # Navigation buttons frame
+        nav_frame = tk.Frame(self.main_content, bg='#1a1a2e')
+        nav_frame.pack(pady=20)
+
+        button_font = self.cached_fonts.get('button', ('Arial', 10))
+
+        # Back button (if not first step)
+        if self.current_step_index > 0:
+            back_btn = tk.Button(nav_frame,
+                               text="← Back",
+                               command=self.previous_step,
+                               font=button_font,
+                               bg='#4facfe',
+                               fg='white',
+                               relief='raised',
+                               bd=2,
+                               padx=10,
+                               pady=5)
+            back_btn.pack(side=tk.LEFT, padx=5)
+
+        # Next button (if not last step)
+        if self.current_step_index < len(self.steps) - 1:
+            next_btn = tk.Button(nav_frame,
+                               text="Next →",
+                               command=self.next_step,
+                               font=button_font,
+                               bg='#4facfe',
+                               fg='white',
+                               relief='raised',
+                               bd=2,
+                               padx=10,
+                               pady=5)
+            next_btn.pack(side=tk.LEFT, padx=5)
+        else:
+            # Finish button on last step
+            finish_btn = tk.Button(nav_frame,
+                                 text="Finish",
+                                 command=self.finish_steps,
+                                 font=button_font,
+                               bg='#4facfe',
+                               fg='white',
+                               relief='raised',
+                               bd=2,
+                               padx=10,
+                               pady=5)
+            finish_btn.pack(side=tk.LEFT, padx=5)
+
+        # Cancel button
+        cancel_btn = tk.Button(nav_frame,
+                              text="Cancel",
+                              command=self.cancel_steps,
+                              font=button_font,
+                              bg='#ff6b6b',
+                              fg='white',
+                              relief='raised',
+                              bd=2,
+                              padx=10,
+                              pady=5)
+        cancel_btn.pack(side=tk.LEFT, padx=5)
+
+    def next_step(self):
+        """Go to next step"""
+        if self.current_step_index < len(self.steps) - 1:
+            self.current_step_index += 1
+            self.display_step()
+
+    def previous_step(self):
+        """Go to previous step"""
+        if self.current_step_index > 0:
+            self.current_step_index -= 1
+            self.display_step()
+
+    def finish_steps(self):
+        """Finish steps and return to menu"""
+        self.steps = []
+        self.current_step_index = 0
+        self.recreate_menu_structure()
+        self.update_status("Steps completed")
+
+    def cancel_steps(self):
+        """Cancel steps and return to menu"""
+        self.steps = []
+        self.current_step_index = 0
+        self.recreate_menu_structure()
+        self.update_status("Steps cancelled")
+
+    def recreate_menu_structure(self):
+        """Recreate the menu structure after displaying steps"""
+        # Clear main content
+        for widget in self.main_content.winfo_children():
+            widget.destroy()
+
+        # Recreate menu frame
+        self.menu_frame = tk.Frame(self.main_content, bg='#2e2e3e', relief='raised', bd=1)
+        self.menu_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 0))
+
+        # Navigation header
+        self.nav_header = ttk.Label(self.menu_frame, text="Navigation", style='Title.TLabel')
+        self.nav_header.pack(pady=10)
+
+        # Menu buttons frame
+        self.menu_buttons_frame = tk.Frame(self.menu_frame, bg='#2e2e3e')
+        self.menu_buttons_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        # Recreate menu buttons
+        self.create_menu_buttons()
+
     def on_closing(self):
         """Handle window closing event"""
         self.root.destroy()
