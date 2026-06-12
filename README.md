@@ -1,6 +1,6 @@
 # Xiaomi 13T MultiTool
 
-PROJECT STOPPED FOR SOLUTIONS TO A CRITICAL PROBLEM RELATED TO "Root flashing" FIX SOON!!!
+Project Archived due to device sale. Sorry... No more updates will be released.
 
 ## Features programm:
 
